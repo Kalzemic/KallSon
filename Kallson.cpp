@@ -1,169 +1,184 @@
 #include "Kallson.hpp"
-#include <string>
-#include <map>
-#include <vector>
-#include<cctype>
-#include <pair>
 
 
+
+
+
+kallson_data parse_string(std::string::iterator start, std::string::iterator  end)
+{
+    union kallson_data data;
+    data.jstring="";
+    char p=*start;
+    while(p!= '"' && start!=end)
+    {
+        data.jstring+=p;
+        start++;
+        p=*start;
+    }
+    if(start==end)
+    {
+        std::cerr<<"Invalid Json" <<std::endl;
+        return;
+    }
+    return data;
+}
+kallson_data parse_num(std::string::iterator  start, std::string::iterator  end)
+{
+    kallson_data data;
+    data.jint=0;
+    char p=*start;
+    while(isdigit(p) && start!= end)
+    {
+        data.jint*=10;
+        data.jint+=(int)(p-'0');
+        start++;
+        p=*start;
+    }
+   
+    return data;
+}
 
     
-KallSon_data parse_value(auto start, auto end, std::string buffer)
+kallson_data parse_value(std::string::iterator start, std::string::iterator end, std::string buffer)
 {
-    KallSon_data data;
+    if(start==end)
+        {
+            std::cout<< "End of File \n";
+            return;
+        }
+    kallson_data data;
     std::string value;
     int numvalue;
-    for(start;start!=end;start++)
+    char p=*start;
+    while(p==' ' ||p=='\n' || p=='\r')
     {
-        char p=*start;
-        if(p=='"')
-            inString=!inString;
-        else if(inString) //case for value being a string
-            {
-                if(current!= STRING)
-                    current= STRING;    
-                 value+=p;
-            }
-            else if(!inString && std::isdigit(p)) //case for value being a number
-            {
-                if(current!=NUMBER)
-                    current=NUMBER;
-                numvalue=numvalue*10 +(int)p;
-            } 
+        start++;
+        p=*start;
+    }
+    if(p=='"') // case s
+    {
+        data.jstring=parse_string(start,end).jstring;
+    }
+    else if( std::isdigit(p)) //case for value being a number
+    {
+        data.jint=parse_num(start,end).jint;
+    }   
     
-        else if(p=='{') //case for value being an object
-        {   
-            auto tmp=start+1;
-            int bracketcount=1;
-            do
-            {
-                start++;
-                p=start;
-                if(p=='{')
-                    bracketcount++;
-                if(p=='}')
-                    bracketcount--;
-            }while(bracketcount>=0)
-            return parse_object(tmp,start-1,buffer);
-        }
-        else if(p=='[') //case for value being an array
-        {   
-            auto tmp=start+1;
-            int bracketcount=1;
-            do
-            {
-                start++;
-                p=start;
-                if(p=='[')
-                    bracketcount++;
-                if(p==']')
-                    bracketcount--;
-            }while(bracketcount>=0)
-        return parse_array(tmp,start-1,buffer);
-        }
+    else if(p=='{') //case for value being an object
+    {   
+       data.jobj=parse_object(start,end).jobj;
     }
-    if(current==STRING)
-        data.jstring=value;
-    if(current==NUMBER)
-        data.jint=numvalue;
+    else if(p=='[') //case for value being an array
+    {   
+        data.jarr= parse_array(start,end).jarr;
+    }
+    while(p!=',' && p!=':' && start!= end)
+    {
+        start++;
+        p=*start;
+    }
+    if(start==end)
+    {
+        std::cout<< "End of File \n";
+        return;
+    }
     return data;
-}
+    }
+    
 
-KallSon_data parse_array(auto start, auto end, std::string buffer)
+kallson_data parse_array(std::string::iterator start,std::string::iterator end)
 {
-    KallSon_data data;
-    data.jarr;
-    auto ref=start;
-    for(start;start!=end;start++)
-    {
-        p=*start;
-        if(p==',')
-        {
-            data.jarr.push_back(parse_value(ref,start-1,buffer));   //handle single value
-            ref=start;
-        }
-        else if(p=='{') //handle case where an array value is an object
-        {   
-            auto tmp=start+1;
-            int bracketcount=1;
-            do
-            {
-                start++;
-                p=start;
-                if(p=='{')
-                    bracketcount++;
-                if(p=='}')
-                    bracketcount--;
-            }while(bracketcount>=0)
-            data.jarr.push_back(parse_object(tmp,start-1,buffer)); 
-        }
-        else if(p=='[')  //handle case where array value is an array itself
-        {   
-            auto tmp=start+1;
-            int bracketcount=1;
-            do
-            {
-                start++;
-                p=start;
-                if(p=='[')
-                    bracketcount++;
-                if(p==']')
-                    bracketcount--;
-            }while(bracketcount>=0)
-        data.jarr.push_back(parse_array(tmp,start-1,buffer));
-        }
-
+    if (start == end || *start != '[') {
+        std::cerr << "Error: Expected '[' to start an array." << std::endl;
+        return;
     }
-        return data;
-}
-KallSon_data parse_object(auto start, auto end, buffer)
-{   boolean isKey=true;
-    boolean inString=false;
-    int braces=0;
-    int brackets=0;
-    std::string key;
-    auto temp=start;
-    std::pair<std::string,KallSon_data> pair;
-    std::map<std::string,KallSon_data> data;
-    for(start;start!=end;start++)
-    {
-        p=*start;
-        if(p=='"')
+    start++;
+    kallson_data data;
+    data.jarr;
+    int bracketcounter=1;
+    char p=*start;
+    while(bracketcounter>0 || start!=end)
+    {   
+        switch(p)
         {
-            inString=!inString;
+        case '[':
+            bracketcounter++;
+            break;
+        case ']':
+            bracketcounter--;
+            break;
+        case ',':
+            break;
+        default:
+            data.jarr.push_back(parse_value(start,end));
+            break;
         }
-        else if(isKey && inString)
-            key+=p;
-        else if(p==":")
-        {
-            isKey=false;
-        }
-        else if(!isKey)
-        {   auto tmp=start++;
-            while(p!=',' || braces!=0 || brackets!=0)
-            {
-                
-                p=*start;
-                if(p=='{')
-                    braces++;
-                else if(p=='}')
-                    braces--;
-                else if(p=='[')
-                    brackets++;
-                else if(p==']')
-                    brackets--;
-                start++;
-            }
-            pair.first=key;
-            pair.second=parse_value(tmp,start-1,buffer);
-            data.jobj.insert(pair);
-            isKey=true;
-            key="";
-            
-
-        }
-        
-
+        start++;
+        p=*start; 
     }
     return data;
+}
+
+
+
+
+kallson_data parse_object(std::string::iterator start, std::string::iterator end)
+{
+    
+    start++;
+    char p=*start;
+    int bracescounter=1;
+    kallson_data data;
+    data.jobj;
+    std::pair<std::string,kallson_data> pair;
+    std::string key;
+    kallson_data temp;
+    while(bracescounter>0 || start==end)
+    {
+        switch(p)
+        {
+            case '{':
+                bracescounter++;
+                break;
+            case '}':
+                bracescounter--;
+                break;
+            case ',':
+                temp.jobj=parse_string(start,end).jobj;
+                key=temp.jstring;
+                break;
+            case ':':
+                temp=parse_value(start,end);
+                data.jobj[key]=temp;
+                break;
+        }
+        start++;
+        p=*start;
+    }
+    if(start==end)
+        {
+            std::cout<< "End of File \n";
+            return;
+        }
+    return data;
+}
+
+std::string fileToString(const std::string& filePath) {
+    std::ifstream file(filePath);
+    if (!file) {
+        std::cerr << "Error: Unable to open file " << filePath << std::endl;
+        return "";
+    }
+
+    std::ostringstream buffer;
+    buffer << file.rdbuf();  // Read file contents into buffer
+    return buffer.str();     // Return the buffer as a string
+}
+
+kallson_data parse_json(const std::string& jsonpath)
+{
+    std::string jsonSTR= fileToString(jsonpath);
+    auto start=jsonSTR.begin();
+    auto end=jsonSTR.end();
+    kallson_data kdata= parse_object(start, end);
 }
