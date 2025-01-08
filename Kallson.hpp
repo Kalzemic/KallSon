@@ -8,7 +8,10 @@
 #include <map>
 #include <new> // For placement new
 
-union kallson_data {
+enum class Type { NONE, INT, DOUBLE, CHAR, STRING, FLOAT, BOOL, ARRAY, OBJECT } type;
+struct kallson_data {
+    
+    
     int jint;
     double jdouble;
     char jchar;
@@ -17,20 +20,25 @@ union kallson_data {
     bool jbool;
     std::vector<kallson_data> jarr;
     std::map<std::string, kallson_data> jobj;
-    enum class Type { NONE, INT, DOUBLE, CHAR, STRING, FLOAT, BOOL, ARRAY, OBJECT } type;
+    
+    
+    
     // Default constructor
-    kallson_data() : type(Type::NONE) {}
+    kallson_data()  
+    {type = Type::NONE;}
 
     // Destructor
     ~kallson_data() { clear(); }
 
     // Copy constructor
-    kallson_data(const kallson_data& other) : type(Type::NONE) {
+    kallson_data(const kallson_data& other)   {
+        type=Type::NONE;
         copyFrom(other);
     }
 
     // Move constructor
-    kallson_data(kallson_data&& other) noexcept : type(Type::NONE) {
+    kallson_data(kallson_data&& other) noexcept  {
+        type=Type::NONE;
         moveFrom(std::move(other));
     }
 
@@ -68,7 +76,7 @@ private:
         switch (type) {
             case Type::STRING: jstring.~basic_string(); break;
             case Type::ARRAY: jarr.~vector(); break;
-            case Type::OBJECT: jobj.~map(); break;
+            case Type::OBJECT:jobj.~map(); break;
             default: break; // Trivial types need no explicit destruction
         }
         type = Type::NONE;
@@ -76,7 +84,6 @@ private:
 
     // Helper to copy from another kallson_data
     void copyFrom(const kallson_data& other) {
-        type = other.type;
         switch (type) {
             case Type::INT: jint = other.jint; break;
             case Type::DOUBLE: jdouble = other.jdouble; break;
@@ -92,7 +99,6 @@ private:
 
     // Helper to move from another kallson_data
     void moveFrom(kallson_data&& other) noexcept {
-        type = other.type;
         switch (type) {
             case Type::INT: jint = other.jint; break;
             case Type::DOUBLE: jdouble = other.jdouble; break;
@@ -104,7 +110,7 @@ private:
             case Type::OBJECT: new (&jobj) std::map<std::string, kallson_data>(std::move(other.jobj)); break;
             default: break;
         }
-        other.type = Type::NONE; // Leave the source in a valid state
+        
     }
 };
 

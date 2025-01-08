@@ -6,8 +6,9 @@
 
 kallson_data parse_string(std::string::iterator start, std::string::iterator  end)
 {
-    union kallson_data data;
+    kallson_data data;
     data.jstring="";
+    type=Type::STRING;
     char p=*start;
     while(p!= '"' && start!=end)
     {
@@ -26,6 +27,7 @@ kallson_data parse_num(std::string::iterator  start, std::string::iterator  end)
 {
     kallson_data data;
     data.jint=0;
+    type=Type::INT;
     char p=*start;
     while(isdigit(p) && start!= end)
     {
@@ -95,7 +97,6 @@ kallson_data parse_array(std::string::iterator start,std::string::iterator end)
     start++;
     kallson_data data;
     data.jarr;
-    data.type= kallson_data::Type::ARRAY;
     int bracketcounter=1;
     char p=*start;
     while(bracketcounter>0 || start!=end)
@@ -111,6 +112,7 @@ kallson_data parse_array(std::string::iterator start,std::string::iterator end)
         case ',':
             break;
         default:
+        type=Type::ARRAY;
             data.jarr.push_back(parse_value(start,end));
             break;
         }
@@ -131,7 +133,6 @@ kallson_data parse_object(std::string::iterator start, std::string::iterator end
     int bracescounter=1;
     kallson_data data;
     data.jobj;
-    data.type=kallson_data::Type::OBJECT;
     std::pair<std::string,kallson_data> pair;
     std::string key;
     kallson_data temp;
@@ -151,6 +152,7 @@ kallson_data parse_object(std::string::iterator start, std::string::iterator end
                 break;
             case ':':
                 temp=parse_value(start,end);
+                type=Type::OBJECT;
                 data.jobj[key]=temp;
                 break;
         }
