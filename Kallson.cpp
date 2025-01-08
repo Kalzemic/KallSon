@@ -95,6 +95,7 @@ kallson_data parse_array(std::string::iterator start,std::string::iterator end)
     start++;
     kallson_data data;
     data.jarr;
+    data.type= kallson_data::Type::ARRAY;
     int bracketcounter=1;
     char p=*start;
     while(bracketcounter>0 || start!=end)
@@ -130,6 +131,7 @@ kallson_data parse_object(std::string::iterator start, std::string::iterator end
     int bracescounter=1;
     kallson_data data;
     data.jobj;
+    data.type=kallson_data::Type::OBJECT;
     std::pair<std::string,kallson_data> pair;
     std::string key;
     kallson_data temp;

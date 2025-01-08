@@ -17,9 +17,7 @@ union kallson_data {
     bool jbool;
     std::vector<kallson_data> jarr;
     std::map<std::string, kallson_data> jobj;
-
     enum class Type { NONE, INT, DOUBLE, CHAR, STRING, FLOAT, BOOL, ARRAY, OBJECT } type;
-
     // Default constructor
     kallson_data() : type(Type::NONE) {}
 
@@ -44,7 +42,17 @@ union kallson_data {
         }
         return *this;
     }
-
+    kallson_data operator=(std::string str)
+    {
+        type=Type::STRING;
+        jstring=str;
+    }
+    kallson_data operator=(int num)
+    {
+        type=Type::INT;
+        jstring=num;
+    }
+    
     // Move assignment operator
     kallson_data& operator=(kallson_data&& other) noexcept {
         if (this != &other) {
@@ -106,10 +114,7 @@ kallson_data parse_array(std::string::iterator start,std::string::iterator end);
 kallson_data parse_object(std::string::iterator start,std::string::iterator end);
 kallson_data parse_num(std::string::iterator start,std::string::iterator end);
 
-typedef enum TokenType
-{
-    NONE, STRING,NUMBER,BOOLEAN,ARRAY, OBJECT
-};
+
 
 
 #endif //_KALLSON_
